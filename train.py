@@ -2,17 +2,18 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split
-from model import build_model
+from model import CatDogCNN
 
 # Config
 DATA_DIR = "data"
-EPOCHS = 5
+EPOCHS = 10
 BATCH_SIZE = 32
 LR = 1e-3
 
 # Transforms
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406],
                          [0.229, 0.224, 0.225]),
@@ -29,15 +30,17 @@ val_loader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=False)
 
 # Model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = build_model().to(device)
+print(f"Using device: {device}")
 
+model = CatDogCNN().to(device)
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(model.fc.parameters(), lr=LR)
+optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
 # Train
 for epoch in range(EPOCHS):
     model.train()
     running_loss = 0.0
+
     for images, labels in train_loader:
         images = images.to(device)
         labels = labels.float().unsqueeze(1).to(device)
